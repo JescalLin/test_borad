@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>排行榜</title>
   <style>
     body {
@@ -12,7 +13,9 @@
       align-items: flex-start;
       min-height: 100vh;
       margin: 0;
+      padding: 0;
     }
+
     .ranking-container {
       background: #fff;
       border-radius: 16px;
@@ -20,19 +23,26 @@
       padding: 32px 40px;
       margin-top: 60px;
       min-width: 320px;
+      max-width: 500px;
+      width: 100%;
       text-align: center;
+      box-sizing: border-box;
     }
+
     h1 {
       margin-bottom: 32px;
       color: #2d3748;
       letter-spacing: 2px;
+      font-size: 1.8em;
     }
+
     ol {
       list-style: none;
       padding: 0;
       margin: 0;
       position: relative;
     }
+
     .rank-item {
       display: flex;
       align-items: center;
@@ -49,6 +59,7 @@
       z-index: 1;
       will-change: transform;
     }
+
     .rank-item.top1 {
       background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);
       color: #fff;
@@ -56,32 +67,73 @@
       font-weight: bold;
       box-shadow: 0 2px 8px rgba(255, 174, 51, 0.15);
     }
+
     .rank-item.top2 {
       background: linear-gradient(90deg, #e0eafc 0%, #cfdef3 100%);
       color: #2b6cb0;
       font-weight: bold;
     }
+
     .rank-item.top3 {
       background: linear-gradient(90deg, #fbc2eb 0%, #a6c1ee 100%);
       color: #805ad5;
       font-weight: bold;
     }
+
     .rank-item.top4 {
       background: linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%);
       color: #22543d;
     }
+
     .rank-item.top5 {
       background: linear-gradient(90deg, #e0e0e0 0%, #f9f9f9 100%);
       color: #4a4a4a;
     }
+
     .medal {
       font-size: 1.5em;
       margin-right: 16px;
     }
+
     .score {
       margin-left: 12px;
       font-size: 0.9em;
       color: #888;
+    }
+
+    /* 手機樣式：滿版，調小間距與字體 */
+    @media (max-width: 768px) {
+      body {
+        justify-content: flex-start;
+        padding: 0 12px;
+      }
+
+      .ranking-container {
+        width: 100%;
+        margin-top: 24px;
+        padding: 24px 16px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      h1 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+      }
+
+      .rank-item {
+        font-size: 1.1em;
+        padding: 12px;
+      }
+
+      .medal {
+        font-size: 1.2em;
+        margin-right: 10px;
+      }
+
+      .score {
+        font-size: 0.8em;
+      }
     }
   </style>
 </head>
