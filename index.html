@@ -66,6 +66,14 @@
       color: #805ad5;
       font-weight: bold;
     }
+    .rank-item.top4 {
+      background: linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%);
+      color: #22543d;
+    }
+    .rank-item.top5 {
+      background: linear-gradient(90deg, #e0e0e0 0%, #f9f9f9 100%);
+      color: #4a4a4a;
+    }
     .medal {
       font-size: 1.5em;
       margin-right: 16px;
@@ -85,18 +93,16 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
   <script>
-    let rankings = [];
-    const medals = ["🥇", "🥈", "🥉"];
+    const medals = ["🥇", "🥈", "🥉", "🏅", "🎖"];
     const list = document.getElementById('ranking-list');
 
-    function updateListWithFLIP(newTop3) {
+    function updateListWithFLIP(newTop5) {
       const prevItems = Array.from(list.children);
       const firstPos = new Map();
       prevItems.forEach(el => {
         firstPos.set(el.dataset.key, el.getBoundingClientRect().top);
       });
 
-      // 移除現有項目（但先暫存）
       const oldMap = new Map();
       prevItems.forEach(el => {
         oldMap.set(el.dataset.key, el);
@@ -104,8 +110,8 @@
 
       list.innerHTML = '';
 
-      newTop3.forEach((item, idx) => {
-        const key = `${item.name}_${item.score}`; // 唯一 key
+      newTop5.forEach((item, idx) => {
+        const key = `${item.name}_${item.score}`;
         let li;
         if (oldMap.has(key)) {
           li = oldMap.get(key);
@@ -115,11 +121,14 @@
 
         li.className = 'rank-item top' + (idx + 1);
         li.dataset.key = key;
-        li.innerHTML = `<span class="medal">${medals[idx]}</span>${item.name}`;
+
+        const medal = medals[idx] || '';
+        const medalSpan = medal ? `<span class="medal">${medal}</span>` : '';
+        li.innerHTML = `${medalSpan}${item.name}`;
+
         list.appendChild(li);
       });
 
-      // FLIP 動畫：計算新位置
       const newItems = Array.from(list.children);
       newItems.forEach(el => {
         const key = el.dataset.key;
@@ -147,22 +156,26 @@
             name: row.name,
             score: Number(row.score)
           }));
-          data = data.sort((a, b) => b.score - a.score).slice(0, 3); // 只保留前三名
+          data = data
+            .filter(d => d.name && !isNaN(d.score))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5); // 顯示前五名
           updateListWithFLIP(data);
         }
       });
     }
 
-    // WebSocket 接收新資料
-    const ws = new WebSocket('ws://' + location.host);
-    ws.onmessage = function(event) {
-      updateFromCSVText(event.data);
-    };
+    const csvURL = 'https://docs.google.com/spreadsheets/d/1OaOHDug6IavFlM4SBbFUfiy27Je1CzS5OEif9am9sCs/gviz/tq?tqx=out:csv';
 
-    // 初始載入一次
-    fetch('ranking.csv')
-      .then(res => res.text())
-      .then(updateFromCSVText);
+    function fetchAndUpdate() {
+      fetch(csvURL)
+        .then(res => res.text())
+        .then(updateFromCSVText)
+        .catch(err => console.error('資料讀取失敗', err));
+    }
+
+    setInterval(fetchAndUpdate, 2000);
+    fetchAndUpdate();
   </script>
 </body>
 </html>
