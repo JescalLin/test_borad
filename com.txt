@@ -1,0 +1,4 @@
+npm install ws chokidar express
+
+
+node server.js

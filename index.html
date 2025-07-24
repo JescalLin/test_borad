@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>排行榜</title>
+  <style>
+    body {
+      background: #f7fafc;
+      font-family: 'Segoe UI', '微軟正黑體', Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .ranking-container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 32px 40px;
+      margin-top: 60px;
+      min-width: 320px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 32px;
+      color: #2d3748;
+      letter-spacing: 2px;
+    }
+    ol {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      position: relative;
+    }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      font-size: 1.3em;
+      font-weight: 500;
+      color: #4a5568;
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 14px 0;
+      transition: background 0.2s, transform 0.5s cubic-bezier(.4,2,.6,1), box-shadow 0.2s;
+      position: relative;
+      z-index: 1;
+      will-change: transform;
+    }
+    .rank-item.top1 {
+      background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);
+      color: #fff;
+      font-size: 1.5em;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(255, 174, 51, 0.15);
+    }
+    .rank-item.top2 {
+      background: linear-gradient(90deg, #e0eafc 0%, #cfdef3 100%);
+      color: #2b6cb0;
+      font-weight: bold;
+    }
+    .rank-item.top3 {
+      background: linear-gradient(90deg, #fbc2eb 0%, #a6c1ee 100%);
+      color: #805ad5;
+      font-weight: bold;
+    }
+    .medal {
+      font-size: 1.5em;
+      margin-right: 16px;
+    }
+    .score {
+      margin-left: 12px;
+      font-size: 0.9em;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="ranking-container">
+    <h1>排行榜</h1>
+    <ol id="ranking-list"></ol>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script>
+    let rankings = [];
+    const medals = ["🥇", "🥈", "🥉"];
+    const list = document.getElementById('ranking-list');
+
+    function updateListWithFLIP(newTop3) {
+      const prevItems = Array.from(list.children);
+      const firstPos = new Map();
+      prevItems.forEach(el => {
+        firstPos.set(el.dataset.key, el.getBoundingClientRect().top);
+      });
+
+      // 移除現有項目（但先暫存）
+      const oldMap = new Map();
+      prevItems.forEach(el => {
+        oldMap.set(el.dataset.key, el);
+      });
+
+      list.innerHTML = '';
+
+      newTop3.forEach((item, idx) => {
+        const key = `${item.name}_${item.score}`; // 唯一 key
+        let li;
+        if (oldMap.has(key)) {
+          li = oldMap.get(key);
+        } else {
+          li = document.createElement('li');
+        }
+
+        li.className = 'rank-item top' + (idx + 1);
+        li.dataset.key = key;
+        li.innerHTML = `<span class="medal">${medals[idx]}</span>${item.name}`;
+        list.appendChild(li);
+      });
+
+      // FLIP 動畫：計算新位置
+      const newItems = Array.from(list.children);
+      newItems.forEach(el => {
+        const key = el.dataset.key;
+        const oldTop = firstPos.get(key);
+        const newTop = el.getBoundingClientRect().top;
+        const delta = oldTop != null ? oldTop - newTop : 0;
+
+        if (delta !== 0) {
+          el.style.transition = 'none';
+          el.style.transform = `translateY(${delta}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform 0.5s cubic-bezier(.4,2,.6,1)';
+            el.style.transform = '';
+          });
+        }
+      });
+    }
+
+    function updateFromCSVText(csvText) {
+      Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          let data = results.data.map(row => ({
+            name: row.name,
+            score: Number(row.score)
+          }));
+          data = data.sort((a, b) => b.score - a.score).slice(0, 3); // 只保留前三名
+          updateListWithFLIP(data);
+        }
+      });
+    }
+
+    // WebSocket 接收新資料
+    const ws = new WebSocket('ws://' + location.host);
+    ws.onmessage = function(event) {
+      updateFromCSVText(event.data);
+    };
+
+    // 初始載入一次
+    fetch('ranking.csv')
+      .then(res => res.text())
+      .then(updateFromCSVText);
+  </script>
+</body>
+</html>
